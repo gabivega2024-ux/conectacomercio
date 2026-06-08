@@ -1,3 +1,5 @@
+const productRoutes =
+require("./routes/productRoutes");
 // Importa el framework Express para crear el servidor
 const express =
 require("express");
@@ -17,6 +19,10 @@ require("./routes/userRoutes");
 // Crea una instancia de la aplicación Express
 const app =
 express();
+
+const pedidoRoutes =
+require("./routes/pedidoRoutes");
+
 
 // Habilita CORS para permitir la comunicación
 // entre el frontend y el backend
@@ -38,7 +44,21 @@ app.use(
  "/api",
  userRoutes
 );
+app.use(
+  "/api/productos",
+  productRoutes
+);
 
+app.use(
+  "/api/pedidos",
+  pedidoRoutes
+);
+
+app.post("/api/login", (req, res) => {
+  res.json({
+    mensaje: "LOGIN TEST"
+  });
+});
 // Inicia el servidor en el puerto 3001
 app.listen(
  3001,

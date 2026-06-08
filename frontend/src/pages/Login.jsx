@@ -1,39 +1,28 @@
-// Importa los hooks de React
 import {
   useState,
   useEffect
 } from "react";
 
-// Importa las herramientas de navegación de React Router
 import {
   useNavigate,
   Link
 } from "react-router-dom";
 
-// Importa el servicio de autenticación
-import { loginUser } from "../services/authService";
+import {
+  loginUser
+} from "../services/authService";
 
 function Login() {
 
-  // Estado para almacenar el nombre de usuario
   const [usuario, setUsuario] =
     useState("");
 
-  // Estado para almacenar la contraseña
   const [password, setPassword] =
     useState("");
 
-  // Hook para navegar entre páginas
   const navigate =
     useNavigate();
 
-  /**
-   * Verifica si existe una sesión activa.
-   *
-   * Si el usuario ya inició sesión,
-   * se redirecciona automáticamente
-   * al dashboard correspondiente.
-   */
   useEffect(() => {
 
     const sesion =
@@ -85,28 +74,36 @@ function Login() {
 
   }, [navigate]);
 
-  /**
-   * Función encargada de autenticar al usuario
-   */
   const iniciarSesion =
     async (e) => {
 
-      // Evita la recarga automática del formulario
       e.preventDefault();
 
       try {
 
-        // Envía las credenciales al backend
+        console.log(
+          "Intentando login..."
+        );
+
         const response =
           await loginUser(
             usuario,
             password
           );
 
-        // Guarda información de la sesión en el navegador
+        console.log(
+          "Respuesta backend:",
+          response.data
+        );
+
         localStorage.setItem(
           "sesion",
           "activa"
+        );
+
+        localStorage.setItem(
+          "id",
+          response.data.id
         );
 
         localStorage.setItem(
@@ -119,12 +116,10 @@ function Login() {
           response.data.rol
         );
 
-        // Mensaje de autenticación exitosa
         alert(
           "Autenticación satisfactoria"
         );
 
-        // Redirecciona según el rol del usuario
         if (
           response.data.rol ===
           "admin"
@@ -137,9 +132,7 @@ function Login() {
             }
           );
 
-        }
-
-        if (
+        } else if (
           response.data.rol ===
           "tendero"
         ) {
@@ -151,9 +144,7 @@ function Login() {
             }
           );
 
-        }
-
-        if (
+        } else if (
           response.data.rol ===
           "mayorista"
         ) {
@@ -165,12 +156,29 @@ function Login() {
             }
           );
 
+        } else {
+
+          alert(
+            "Rol no reconocido"
+          );
+
         }
 
-      } catch {
+      } catch (error) {
 
-        // Mensaje de error en caso de credenciales incorrectas
+        console.error(
+          "ERROR LOGIN:",
+          error
+        );
+
+        console.error(
+          "RESPONSE:",
+          error.response
+        );
+
         alert(
+          error?.response?.data?.mensaje ||
+          error.message ||
           "Error en la autenticación"
         );
 
@@ -180,28 +188,27 @@ function Login() {
 
   return (
 
-    // Contenedor principal centrado en pantalla
     <div className="vh-100 d-flex justify-content-center align-items-center bg-light">
 
-      {/* Tarjeta del formulario */}
       <div
         className="card shadow-lg border-0"
-        style={{ width: "420px" }}
+        style={{
+          width: "420px"
+        }}
       >
 
         <div className="card-body p-5">
 
-          {/* Título */}
           <h2 className="text-center mb-4">
             Iniciar Sesión
           </h2>
 
-          {/* Formulario de autenticación */}
           <form
-            onSubmit={iniciarSesion}
+            onSubmit={
+              iniciarSesion
+            }
           >
 
-            {/* Campo usuario */}
             <div className="mb-3">
 
               <label>
@@ -222,7 +229,6 @@ function Login() {
 
             </div>
 
-            {/* Campo contraseña */}
             <div className="mb-4">
 
               <label>
@@ -243,8 +249,8 @@ function Login() {
 
             </div>
 
-            {/* Botón de ingreso */}
             <button
+              type="submit"
               className="btn btn-primary w-100"
             >
               Ingresar
@@ -254,7 +260,6 @@ function Login() {
 
           <hr />
 
-          {/* Enlace al formulario de registro */}
           <Link
             to="/register"
             className="btn btn-success w-100"
@@ -272,5 +277,4 @@ function Login() {
 
 }
 
-// Exporta el componente para utilizarlo en las rutas
 export default Login;

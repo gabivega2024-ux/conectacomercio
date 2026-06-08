@@ -1,19 +1,11 @@
-// Importa el hook useEffect para validaciones
 import { useEffect } from "react";
-
-// Importa el hook para la navegación entre rutas
 import { useNavigate } from "react-router-dom";
 
 function DashboardTendero() {
 
-  // Hook para redireccionar usuarios
   const navigate =
     useNavigate();
 
-  /**
-   * Verifica que exista una sesión activa
-   * y que el usuario tenga rol tendero.
-   */
   useEffect(() => {
 
     const sesion =
@@ -26,7 +18,6 @@ function DashboardTendero() {
         "rol"
       );
 
-    // Si no existe sesión activa
     if (!sesion) {
 
       navigate(
@@ -40,8 +31,9 @@ function DashboardTendero() {
 
     }
 
-    // Si el usuario no es tendero
-    if (rol !== "tendero") {
+    if (
+      rol !== "tendero"
+    ) {
 
       alert(
         "Acceso denegado"
@@ -58,30 +50,24 @@ function DashboardTendero() {
 
   }, [navigate]);
 
-  // Obtiene el nombre del usuario almacenado en la sesión
   const usuario =
     localStorage.getItem(
       "usuario"
     );
 
-  /**
-   * Función para cerrar sesión
-   */
-  const cerrarSesion = () => {
+  const cerrarSesion =
+    () => {
 
-    // Elimina toda la información de la sesión
-    localStorage.clear();
+      localStorage.clear();
 
-    // Redirecciona al Login eliminando
-    // la página actual del historial
-    navigate(
-      "/",
-      {
-        replace: true
-      }
-    );
+      navigate(
+        "/",
+        {
+          replace: true
+        }
+      );
 
-  };
+    };
 
   return (
 
@@ -91,92 +77,171 @@ function DashboardTendero() {
 
         <div className="card-body p-5">
 
-          {/* Título principal */}
           <h1>
             Panel Tendero
           </h1>
 
-          {/* Mensaje de bienvenida */}
           <p>
-
             Bienvenido
-
             <strong>
               {" "}
               {usuario}
             </strong>
-
           </p>
 
           <hr />
 
-          {/* Información del módulo */}
+          {/* MENÚ DE MÓDULOS */}
+
+          <div className="d-flex flex-wrap gap-2 mb-4">
+
+            <button
+              className="btn btn-success"
+              onClick={() =>
+                navigate(
+                  "/ver-productos"
+                )
+              }
+            >
+              🛒 Ver Productos
+            </button>
+
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                navigate(
+                  "/ver-productos"
+                )
+              }
+            >
+              📦 Crear Pedido
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              📋 Mis Pedidos
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              📜 Historial Compras
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              🚚 Seguimiento Entregas
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              ⭐ Proveedores Favoritos
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              📊 Reportes
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              🔔 Promociones
+            </button>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled
+            >
+              📈 Estadísticas
+            </button>
+
+            <button
+              className="btn btn-danger ms-auto"
+              onClick={
+                cerrarSesion
+              }
+            >
+              Cerrar Sesión
+            </button>
+
+          </div>
+
           <div className="alert alert-success">
 
             Acceso para Tenderos
 
           </div>
 
-          {/* Información sobre futuras funcionalidades */}
           <div className="alert alert-info">
 
-            Este es el panel inicial del Tendero.
-            En futuras versiones del sistema se integrarán
-            módulos especializados para la gestión comercial,
-            permitiendo optimizar la relación entre tenderos
-            y mayoristas dentro de la plataforma ConectaComercio.
+            Desde este panel podrá consultar
+            productos publicados por los
+            mayoristas, crear pedidos mediante
+            carrito de compras y realizar el
+            seguimiento de sus compras dentro
+            de la plataforma ConectaComercio.
 
           </div>
 
-          {/* Posibles módulos futuros */}
-          <div className="card bg-light border-0 mb-4">
+          <div className="card bg-light border-0">
 
             <div className="card-body">
 
-              <h5>
-                Módulos previstos para futuras versiones
+              <h5 className="mb-3">
+                Módulos disponibles y futuros
               </h5>
 
-              <ul>
+              <ul className="list-group">
 
-                <li>
-                  Consulta de productos disponibles.
+                <li className="list-group-item">
+                  ✅ Consulta de productos disponibles
                 </li>
 
-                <li>
-                  Solicitud y gestión de pedidos.
+                <li className="list-group-item">
+                  ✅ Carrito de compras
                 </li>
 
-                <li>
-                  Historial de compras realizadas.
+                <li className="list-group-item">
+                  ✅ Creación de pedidos
                 </li>
 
-                <li>
-                  Comparación de precios entre proveedores.
+                <li className="list-group-item">
+                  ✅ Envío de pedidos al mayorista
                 </li>
 
-                <li>
-                  Seguimiento de entregas.
+                <li className="list-group-item">
+                  ⏳ Historial de compras
                 </li>
 
-                <li>
-                  Gestión de inventario de la tienda.
+                <li className="list-group-item">
+                  ⏳ Consulta de pedidos realizados
                 </li>
 
-                <li>
-                  Notificaciones y promociones de mayoristas.
+                <li className="list-group-item">
+                  ⏳ Seguimiento de entregas
                 </li>
 
-                <li>
-                  Reportes y estadísticas de compras.
+                <li className="list-group-item">
+                  ⏳ Gestión de proveedores favoritos
                 </li>
 
-                <li>
-                  Control de productos más vendidos.
+                <li className="list-group-item">
+                  ⏳ Promociones y descuentos
                 </li>
 
-                <li>
-                  Gestión de proveedores favoritos.
+                <li className="list-group-item">
+                  ⏳ Reportes y estadísticas de compras
                 </li>
 
               </ul>
@@ -184,14 +249,6 @@ function DashboardTendero() {
             </div>
 
           </div>
-
-          {/* Botón para cerrar sesión */}
-          <button
-            className="btn btn-danger"
-            onClick={cerrarSesion}
-          >
-            Cerrar Sesión
-          </button>
 
         </div>
 

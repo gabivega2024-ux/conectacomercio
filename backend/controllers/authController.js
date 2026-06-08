@@ -1,192 +1,148 @@
-// Importa la conexión a la base de datos
 const db = require("../config/db");
-
-// Importa la librería bcryptjs para cifrar y validar contraseñas
 const bcrypt = require("bcryptjs");
 
 /**
- * Función para registrar un nuevo usuario
+ * Registrar usuario
  */
 const register = async (req, res) => {
 
-    // Obtiene los datos enviados desde el cliente
-    const {
-        usuario,
+  const {
+    usuario,
+    password,
+    rol
+  } = req.body;
+
+  if (
+    !usuario ||
+    !password ||
+    !rol
+  ) {
+    return res.status(400).json({
+      mensaje: "Todos los campos son obligatorios"
+    });
+  }
+
+  try {
+
+    const [existe] =
+      await db.query(
+        "SELECT * FROM usuarios WHERE usuario = ?",
+        [usuario]
+      );
+
+    if (existe.length > 0) {
+
+      return res.status(400).json({
+        mensaje: "El usuario ya existe"
+      });
+
+    }
+
+    const hash =
+      await bcrypt.hash(
         password,
+        10
+      );
+
+    await db.query(
+      "INSERT INTO usuarios(usuario,password,rol) VALUES (?,?,?)",
+      [
+        usuario,
+        hash,
         rol
-    } = req.body;
+      ]
+    );
 
-    // Verifica que todos los campos obligatorios estén presentes
-    if (
-        !usuario ||
-        !password ||
-        !rol
-    ) {
+    res.status(201).json({
+      mensaje:
+        "Usuario registrado correctamente"
+    });
 
-        return res.status(400).json({
-            mensaje: "Todos los campos son obligatorios"
-        });
+  } catch (error) {
 
-    }
+    console.error(error);
 
-    try {
+    res.status(500).json({
+      mensaje:
+        "Error interno del servidor"
+    });
 
-        // Consulta si el usuario ya existe en la base de datos
-        db.query(
-
-            "SELECT * FROM usuarios WHERE usuario = ?",
-
-            [usuario],
-
-            async (error, resultado) => {
-
-                // Verifica errores durante la consulta
-                if (error) {
-
-                    return res.status(500).json({
-                        mensaje: "Error del servidor"
-                    });
-
-                }
-
-                // Si encuentra registros, el usuario ya existe
-                if (resultado.length > 0) {
-
-                    return res.status(400).json({
-                        mensaje: "El usuario ya existe"
-                    });
-
-                }
-
-                // Cifra la contraseña utilizando bcrypt
-                const hash =
-                    await bcrypt.hash(
-                        password,
-                        10
-                    );
-
-                // Inserta el nuevo usuario en la base de datos
-                db.query(
-
-                    "INSERT INTO usuarios(usuario,password,rol) VALUES (?,?,?)",
-
-                    [
-                        usuario,
-                        hash,
-                        rol
-                    ],
-
-                    (error) => {
-
-                        // Verifica errores al insertar
-                        if (error) {
-
-                            return res.status(500).json({
-                                mensaje: "Error al registrar usuario"
-                            });
-
-                        }
-
-                        // Respuesta exitosa
-                        res.status(201).json({
-                            mensaje: "Usuario registrado correctamente"
-                        });
-
-                    }
-
-                );
-
-            }
-
-        );
-
-    } catch (error) {
-
-        // Captura errores inesperados
-        res.status(500).json({
-            mensaje: "Error interno del servidor"
-        });
-
-    }
+  }
 
 };
 
 /**
- * Función para autenticar usuarios (Login)
+ * Login
  */
-const login = (req, res) => {
+const login = async (req, res) => {
 
-    // Obtiene usuario y contraseña enviados por el cliente
-    const {
-        usuario,
-        password
-    } = req.body;
+  const {
+    usuario,
+    password
+  } = req.body;
 
-    // Busca el usuario en la base de datos
-    db.query(
+  try {
 
+    const [resultado] =
+      await db.query(
         "SELECT * FROM usuarios WHERE usuario = ?",
+        [usuario]
+      );
 
-        [usuario],
+    if (resultado.length === 0) {
 
-        async (error, resultado) => {
+      return res.status(401).json({
+        mensaje:
+          "Error en la autenticación"
+      });
 
-            // Verifica errores durante la consulta
-            if (error) {
+    }
 
-                return res.status(500).json({
-                    mensaje: "Error del servidor"
-                });
+    const valido =
+      await bcrypt.compare(
+        password,
+        resultado[0].password
+      );
 
-            }
+    if (!valido) {
 
-            // Si el usuario no existe
-            if (resultado.length === 0) {
+      return res.status(401).json({
+        mensaje:
+          "Error en la autenticación"
+      });
 
-                return res.status(401).json({
-                    mensaje: "Error en la autenticación"
-                });
+    }
 
-            }
+    res.json({
 
-            // Compara la contraseña ingresada con la almacenada
-            const valido =
-                await bcrypt.compare(
-                    password,
-                    resultado[0].password
-                );
+      mensaje:
+        "Autenticación satisfactoria",
 
-            // Si las contraseñas no coinciden
-            if (!valido) {
+      id:
+        resultado[0].id,
 
-                return res.status(401).json({
-                    mensaje: "Error en la autenticación"
-                });
+      usuario:
+        resultado[0].usuario,
 
-            }
+      rol:
+        resultado[0].rol
 
-            // Retorna la información del usuario autenticado
-            res.json({
+    });
 
-                mensaje:
-                    "Autenticación satisfactoria",
+  } catch (error) {
 
-                usuario:
-                    resultado[0].usuario,
+    console.error(error);
 
-                rol:
-                    resultado[0].rol
+    res.status(500).json({
+      mensaje:
+        "Error del servidor"
+    });
 
-            });
-
-        }
-
-    );
+  }
 
 };
 
-// Exporta las funciones para utilizarlas en las rutas
 module.exports = {
-    register,
-    login
+  register,
+  login
 };

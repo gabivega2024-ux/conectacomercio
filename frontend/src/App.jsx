@@ -10,16 +10,19 @@ from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+
 // Importa los dashboards según el rol del usuario
 import DashboardAdmin from "./pages/DashboardAdmin";
 import DashboardTendero from "./pages/DashboardTendero";
 import DashboardMayorista from "./pages/DashboardMayorista";
+import MisProductos from "./pages/MisProductos";
 
 // Importa la página de gestión de usuarios
 import Users from "./pages/Users";
 
 // Importa el componente encargado de proteger rutas
 import ProtectedRoute from "./components/ProtectedRoute";
+import VerProductos from "./pages/VerProductos";
 
 // Componente principal de la aplicación
 function App() {
@@ -75,6 +78,16 @@ function App() {
         </ProtectedRoute>
       }
     />
+    <Route
+  path="/ver-productos"
+  element={
+    <ProtectedRoute
+      rolPermitido="tendero"
+    >
+      <VerProductos />
+    </ProtectedRoute>
+  }
+/>
 
     {/*
       Ruta protegida para Mayoristas.
@@ -91,6 +104,17 @@ function App() {
         </ProtectedRoute>
       }
     />
+
+    <Route
+  path="/mis-productos"
+  element={
+    <ProtectedRoute
+      rolPermitido="mayorista"
+    >
+      <MisProductos />
+    </ProtectedRoute>
+  }
+/>
 
     {/*
       Ruta protegida para la gestión de usuarios.

@@ -1,41 +1,33 @@
-// Importa la conexión a la base de datos
 const db = require("../config/db");
-
-// Importa la librería bcryptjs para cifrar contraseñas
 const bcrypt = require("bcryptjs");
 
 /**
  * Obtener usuarios
  */
-const getUsers = (req, res) => {
+const getUsers = async (req, res) => {
 
-    // Consulta todos los usuarios registrados
-    db.query(
+  try {
 
-        `SELECT
-            id,
-            usuario,
-            rol,
-            fecha_registro
-         FROM usuarios`,
+    const [rows] = await db.query(`
+      SELECT
+        id,
+        usuario,
+        rol,
+        fecha_registro
+      FROM usuarios
+    `);
 
-        (error, rows) => {
+    res.json(rows);
 
-            // Verifica si ocurrió un error en la consulta
-            if (error) {
+  } catch (error) {
 
-                return res.status(500).json({
-                    mensaje: "Error al obtener usuarios"
-                });
+    console.error(error);
 
-            }
+    res.status(500).json({
+      mensaje: "Error al obtener usuarios"
+    });
 
-            // Retorna la lista de usuarios
-            res.json(rows);
-
-        }
-
-    );
+  }
 
 };
 
@@ -44,241 +36,165 @@ const getUsers = (req, res) => {
  */
 const createUser = async (req, res) => {
 
-    // Obtiene los datos enviados desde el cliente
+  try {
+
     const {
+      usuario,
+      password,
+      rol
+    } = req.body;
+
+    const [existe] =
+      await db.query(
+        "SELECT * FROM usuarios WHERE usuario = ?",
+        [usuario]
+      );
+
+    if (existe.length > 0) {
+
+      return res.status(400).json({
+        mensaje: "El usuario ya existe"
+      });
+
+    }
+
+    const hash =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+    await db.query(
+      `INSERT INTO usuarios
+      (
         usuario,
         password,
         rol
-    } = req.body;
+      )
+      VALUES
+      (
+        ?,
+        ?,
+        ?
+      )`,
+      [
+        usuario,
+        hash,
+        rol
+      ]
+    );
 
-    // Verifica que todos los campos obligatorios estén presentes
-    if (
-        !usuario ||
-        !password ||
-        !rol
-    ) {
+    res.status(201).json({
+      mensaje:
+        "Usuario creado correctamente"
+    });
 
-        return res.status(400).json({
-            mensaje: "Todos los campos son obligatorios"
-        });
+  } catch (error) {
 
-    }
+    console.error(error);
 
-    try {
+    res.status(500).json({
+      mensaje: "Error al crear usuario"
+    });
 
-        // Verifica si el usuario ya existe
-        db.query(
-
-            "SELECT * FROM usuarios WHERE usuario = ?",
-
-            [usuario],
-
-            async (error, resultado) => {
-
-                // Maneja errores de consulta
-                if (error) {
-
-                    return res.status(500).json({
-                        mensaje: "Error del servidor"
-                    });
-
-                }
-
-                // Valida que el usuario no exista previamente
-                if (resultado.length > 0) {
-
-                    return res.status(400).json({
-                        mensaje: "El usuario ya existe"
-                    });
-
-                }
-
-                // Cifra la contraseña antes de almacenarla
-                const hash =
-                    await bcrypt.hash(
-                        password,
-                        10
-                    );
-
-                // Inserta el nuevo usuario en la base de datos
-                db.query(
-
-                    `INSERT INTO usuarios
-                    (
-                        usuario,
-                        password,
-                        rol
-                    )
-                    VALUES
-                    (
-                        ?,
-                        ?,
-                        ?
-                    )`,
-
-                    [
-                        usuario,
-                        hash,
-                        rol
-                    ],
-
-                    (error) => {
-
-                        // Verifica errores durante la inserción
-                        if (error) {
-
-                            return res.status(500).json({
-                                mensaje: "Error al crear usuario"
-                            });
-
-                        }
-
-                        // Respuesta de éxito
-                        res.status(201).json({
-                            mensaje: "Usuario creado correctamente"
-                        });
-
-                    }
-
-                );
-
-            }
-
-        );
-
-    } catch (error) {
-
-        // Captura errores inesperados
-        res.status(500).json({
-            mensaje: "Error interno"
-        });
-
-    }
+  }
 
 };
 
 /**
  * Actualizar usuario
  */
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
 
-    // Obtiene el identificador del usuario desde la URL
+  try {
+
     const { id } = req.params;
 
-    // Obtiene los nuevos datos enviados por el cliente
     const {
-        usuario,
-        rol
+      usuario,
+      rol
     } = req.body;
 
-    // Verifica que no exista otro usuario con el mismo nombre
-    db.query(
-
+    const [existe] =
+      await db.query(
         "SELECT * FROM usuarios WHERE usuario = ? AND id <> ?",
+        [usuario, id]
+      );
 
-        [usuario, id],
+    if (existe.length > 0) {
 
-        (error, resultado) => {
+      return res.status(400).json({
+        mensaje:
+          "Ya existe un usuario con ese nombre"
+      });
 
-            // Maneja errores de consulta
-            if (error) {
+    }
 
-                return res.status(500).json({
-                    mensaje: "Error del servidor"
-                });
-
-            }
-
-            // Valida que el nombre de usuario no esté repetido
-            if (resultado.length > 0) {
-
-                return res.status(400).json({
-                    mensaje: "Ya existe un usuario con ese nombre"
-                });
-
-            }
-
-            // Actualiza la información del usuario
-            db.query(
-
-                `UPDATE usuarios
-                 SET usuario = ?,
-                     rol = ?
-                 WHERE id = ?`,
-
-                [
-                    usuario,
-                    rol,
-                    id
-                ],
-
-                (error) => {
-
-                    // Verifica errores durante la actualización
-                    if (error) {
-
-                        return res.status(500).json({
-                            mensaje: "Error al actualizar usuario"
-                        });
-
-                    }
-
-                    // Respuesta exitosa
-                    res.json({
-                        mensaje: "Usuario actualizado correctamente"
-                    });
-
-                }
-
-            );
-
-        }
-
+    await db.query(
+      `UPDATE usuarios
+       SET usuario = ?,
+           rol = ?
+       WHERE id = ?`,
+      [
+        usuario,
+        rol,
+        id
+      ]
     );
+
+    res.json({
+      mensaje:
+        "Usuario actualizado correctamente"
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      mensaje:
+        "Error al actualizar usuario"
+    });
+
+  }
 
 };
 
 /**
  * Eliminar usuario
  */
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
 
-    // Obtiene el identificador del usuario desde la URL
+  try {
+
     const { id } = req.params;
 
-    // Ejecuta la eliminación del usuario
-    db.query(
-
-        "DELETE FROM usuarios WHERE id = ?",
-
-        [id],
-
-        (error) => {
-
-            // Verifica errores durante la eliminación
-            if (error) {
-
-                return res.status(500).json({
-                    mensaje: "Error al eliminar usuario"
-                });
-
-            }
-
-            // Confirma la eliminación exitosa
-            res.json({
-                mensaje: "Usuario eliminado correctamente"
-            });
-
-        }
-
+    await db.query(
+      "DELETE FROM usuarios WHERE id = ?",
+      [id]
     );
+
+    res.json({
+      mensaje:
+        "Usuario eliminado correctamente"
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      mensaje:
+        "Error al eliminar usuario"
+    });
+
+  }
 
 };
 
-// Exporta las funciones para ser utilizadas en las rutas
 module.exports = {
-    getUsers,
-    createUser,
-    updateUser,
-    deleteUser
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser
 };
